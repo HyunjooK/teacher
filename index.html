@@ -3,244 +3,454 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>구구단 산성비 게임</title>
-    
+    <title>산성비 받아쓰기 게임</title>
     <style>
-        /* CSS 시작 */
+        /* style.css 내용 시작 */
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Malgun Gothic', 'Arial', sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background-color: #f0f0f0;
+            background-color: #2c3e50; /* 어두운 배경 */
+            color: #ecf0f1;
             margin: 0;
-            overflow: hidden; /* 구구단 문제가 밖으로 나가지 않도록 */
+            overflow: hidden; /* 스크롤 방지 */
+            box-sizing: border-box;
         }
 
         #game-container {
-            background-color: #fff;
+            width: 800px;
+            height: 650px; /* 높이 약간 증가 */
+            border: 5px solid #3498db;
+            background-color: #34495e; /* 게임 배경 */
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
             border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-            padding: 30px;
-            text-align: center;
-            width: 90%;
-            max-width: 600px;
-            position: relative;
-            overflow: hidden; /* 문제들이 컨테이너 밖으로 나가지 않게 */
         }
 
-        h1 {
-            color: #333;
-            margin-bottom: 20px;
-        }
-
-        #score-board {
-            font-size: 1.2em;
-            margin-bottom: 20px;
-            color: #555;
-        }
-
-        #game-area {
+        #header {
             width: 100%;
-            height: 300px; /* 게임 영역 높이 */
-            border: 1px solid #ddd;
-            background-color: #e9e9e9;
-            position: relative;
-            overflow: hidden; /* 내려오는 문제들이 이 영역 안에만 있도록 */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 20px;
+            padding: 0 10px;
         }
 
-        .problem {
+        #score {
+            font-size: 2.2em;
+            font-weight: bold;
+            color: #f1c40f; /* 노란색 점수 */
+        }
+
+        #level-select-container {
+            display: flex;
+            align-items: center;
+            font-size: 1.1em;
+        }
+
+        #level-select-container label {
+            margin-right: 10px;
+            color: #bdc3c7;
+        }
+
+        #level-select {
+            padding: 5px 10px;
+            font-size: 1em;
+            border-radius: 5px;
+            border: 1px solid #3498db;
+            background-color: #4a667b;
+            color: #ecf0f1;
+            cursor: pointer;
+        }
+
+        #game-status-message {
+            font-size: 1.3em;
+            color: yellow;
+            font-weight: bold;
+            text-align: center;
+            min-width: 200px; /* 메시지 영역 확보 */
+        }
+
+        #words-falling-area {
+            width: 100%;
+            height: 480px; /* 단어가 떨어질 주된 공간 */
+            position: relative;
+            border-bottom: 2px dashed #95a5a6; /* 바닥선 */
+            margin-bottom: 15px;
+        }
+
+        .falling-word {
             position: absolute;
             top: 0;
-            background-color: #4CAF50;
-            color: white;
+            font-size: 2.3em;
             padding: 8px 15px;
-            border-radius: 5px;
-            font-size: 1.5em;
-            z-index: 10;
-            white-space: nowrap; /* 문제가 줄바꿈되지 않도록 */
-            min-width: 80px; /* 문제 텍스트 길이에 따라 너비가 너무 줄어들지 않도록 */
-            text-align: center;
-            box-sizing: border-box; /* padding이 너비에 포함되도록 */
+            background-color: rgba(231, 76, 60, 0.85); /* 빨간색 단어 */
+            border-radius: 8px;
+            color: white;
+            white-space: nowrap;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+            /* 애니메이션은 JS에서 transform으로 제어 */
+            transition: background-color 0.2s ease-in-out; /* 맞췄을 때 색깔 변하는 애니메이션 */
         }
 
-        #answer-input {
-            width: calc(100% - 20px);
-            padding: 10px;
-            margin-top: 10px;
-            font-size: 1.2em;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+        .falling-word.correct {
+            background-color: rgba(46, 204, 113, 0.9); /* 맞췄을 때 초록색 */
+        }
+
+        #input-area {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #word-input {
+            width: 60%;
+            padding: 12px;
+            font-size: 1.6em;
+            border: none;
+            border-radius: 8px;
+            outline: none;
             text-align: center;
+            background-color: #ecf0f1;
+            color: #2c3e50;
+            margin-right: 15px;
         }
 
         #start-button {
-            background-color: #007bff;
+            padding: 12px 25px;
+            font-size: 1.3em;
+            background-color: #27ae60;
             color: white;
-            padding: 10px 20px;
             border: none;
-            border-radius: 5px;
-            font-size: 1.2em;
+            border-radius: 8px;
             cursor: pointer;
-            margin-top: 15px;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.2s ease-in-out;
         }
 
         #start-button:hover {
-            background-color: #0056b3;
+            background-color: #2ecc71;
         }
-        /* CSS 끝 */
+
+        #start-button:disabled {
+            background-color: #7f8c8d;
+            cursor: not-allowed;
+        }
+        /* style.css 내용 끝 */
     </style>
 </head>
 <body>
     <div id="game-container">
-        <h1>구구단 산성비</h1>
-        <div id="score-board">
-            점수: <span id="score">0</span> | 생명: <span id="life">5</span>
+        <div id="header">
+            <div id="score">점수: 0</div>
+            <div id="level-select-container">
+                <label for="level-select">난이도:</label>
+                <select id="level-select">
+                    <option value="1">1급</option>
+                    <option value="2">2급</option>
+                    <option value="3">3급</option>
+                    <option value="4">4급</option>
+                    <option value="5">5급</option>
+                    <option value="6">6급</option>
+                    <option value="7">7급</option>
+                    <option value="8">8급</option>
+                    <option value="9">9급</option>
+                    <option value="10">10급</option>
+                    <option value="11">11급</option>
+                    <option value="12">12급</option>
+                    <option value="13">13급</option>
+                    <option value="14">14급</option>
+                    <option value="15">15급</option>
+                    <option value="16">16급</option>
+                </select>
+            </div>
+            <div id="game-status-message"></div>
         </div>
-        <div id="game-area">
-            <!-- 구구단 문제가 여기에 동적으로 생성됩니다 -->
+
+        <div id="words-falling-area">
+            <!-- 단어들이 여기에 동적으로 생성되어 떨어집니다 -->
         </div>
-        <input type="text" id="answer-input" placeholder="정답을 입력하세요" autofocus>
-        <button id="start-button">게임 시작</button>
+
+        <div id="input-area">
+            <input type="text" id="word-input" placeholder="여기에 받아쓰세요!" autofocus>
+            <button id="start-button">게임 시작</button>
+        </div>
     </div>
 
     <script>
-        /* JavaScript 시작 */
-        document.addEventListener('DOMContentLoaded', () => {
-            const gameArea = document.getElementById('game-area');
-            const answerInput = document.getElementById('answer-input');
-            const scoreSpan = document.getElementById('score');
-            const lifeSpan = document.getElementById('life');
-            const startButton = document.getElementById('start-button');
+        /* script.js 내용 시작 */
+        // DOM 요소 가져오기
+        const wordsFallingArea = document.getElementById('words-falling-area');
+        const wordInput = document.getElementById('word-input');
+        const scoreDisplay = document.getElementById('score');
+        const startButton = document.getElementById('start-button');
+        const gameStatusMessage = document.getElementById('game-status-message');
+        const levelSelect = document.getElementById('level-select');
 
-            let score = 0;
-            let life = 5;
-            let problems = []; // 현재 화면에 보이는 문제들을 저장
-            let gameInterval;
-            let problemGenerationInterval;
-            let gameRunning = false;
+        // 게임 변수
+        let score = 0;
+        let fallingWords = []; // 현재 떨어지고 있는 단어 객체들을 저장
+        let gameLoopId; // requestAnimationFrame ID
+        let wordGenerationInterval;
+        let gameRunning = false;
+        let wordFallSpeed = 1; // 기본 단어 낙하 속도
+        let wordGenerationRate = 2000; // 2초마다 새 단어 생성
 
-            // 게임 시작 함수
-            function startGame() {
-                if (gameRunning) return; // 이미 실행 중이면 중복 실행 방지
-                gameRunning = true;
-                score = 0;
-                life = 5;
-                scoreSpan.textContent = score;
-                lifeSpan.textContent = life;
-                gameArea.innerHTML = ''; // 기존 문제 제거
-                problems = [];
-                answerInput.value = '';
-                answerInput.focus();
-                startButton.disabled = true; // 게임 시작 버튼 비활성화
+        // 음성 합성 객체 (Web Speech API)
+        const synth = window.speechSynthesis;
 
-                // 문제 생성 주기 (처음엔 2초마다)
-                problemGenerationInterval = setInterval(generateProblem, 2000);
-                // 문제 내려오는 속도 및 충돌 감지 주기 (50ms마다)
-                gameInterval = setInterval(gameLoop, 50); 
-            }
+        // OCR로 추출한 단어 목록 (급수별)
+        const wordLists = {
+            '1': [
+                "신나요", "뿌듯해요", "둥실둥실", "활짝 피었습니다", "얼음처럼 꽁꽁",
+                "내 마음이 반짝반짝", "곰이 그림책을 봅니다", "계곡에서 첨벙첨벙", "보고 싶어요", "친구에게 미안했어요"
+            ],
+            '2': [
+                "괜찮아요", "살랑살랑 움직입니다", "귀여운 고양이들이", "씽씽 지나갑니다", "여러 색깔의 단풍잎",
+                "친구들 앞에서", "노래를 불렀어", "모두 날 부러워해", "내 마음이 반짝반짝", "깜짝 놀랐어"
+            ],
+            '3': [
+                "팔꿈치로 도망갔어요", "가위바위보", "운동장이 넓다", "연필심이 닳았다", "탈출을 했네요",
+                "할아버지는 누구세요", "그렇다면 알려주지", "제자리에 둡시다", "바람이 씽씽", "꼭 안아주는 날"
+            ],
+            '4': [
+                "썩은 동아줄이었어요", "뚝 떨어졌어요", "불빛이 밝다", "길이가 짧다", "감기를 않다",
+                "물이 없다", "우산을 잃어버렸다", "머리를 긁는다", "잡아먹힐 뻔했어", "쓰윽 입을 닦아요"
+            ],
+            '5': [
+                "발표해 볼 거예요", "알맞은 크기의 목소리로", "된장찌개를 먹었다", "친구를 만났다", "빨갛게 익은",
+                "자세히 쓴다", "또박또박 말한다", "귀 기울여 듣는다", "책을 읽습니다", "꿈을 꿉니다"
+            ],
+            '6': [
+                "일곱 시에 일어났다", "사과를 땄다", "정말 재미있었다", "공부를 했다", "숙제를 하고 잤다",
+                "열심히 할 거예요", "잘할 수 있겠죠", "시끄럽고 복잡해요", "사람들도 많고요", "한눈팔지 않아요"
+            ],
+            '7': [
+                "미역도 맛있어", "골고루 잘먹는구나", "할머니 댁에 가기로", "재미있게 놀았다", "이를 닦습니다",
+                "늑대가 나타났어요", "장난쳤어요", "화를 내며 돌아갔어요", "아무도 오지 않았어요", "거짓말을 후회했답니다"
+            ],
+            '8': [
+                "옛날 옛적에", "많이 얻을 수 있어", "저녁이 되자", "몰래 맷돌을 훔쳐", "소금이 쏟아져",
+                "소금이 쌓여갔습니다", "잊어버렸습니다", "가라앉고 말았습니다", "그래서 바닷물이", "짜게 되었습니다"
+            ],
+            '9': [
+                "웃음은 힘이 세다", "책이거든", "포기하지 않고", "잘 돌리면 좋겠다", "동물의 먹이입니다",
+                "다람쥐에게 도토리를", "연필 한 자루", "신발 한 켤레", "넘기면 돼", "둥둥 떠다녀요"
+            ],
+            '10': [
+                "책을 펼치면", "어떻게 해", "뭘 할 수 있어", "내 책 돌려줄래", "충전할 필요 없어",
+                "왜냐하면", "때문이다", "이리저리 움직였다", "칭찬해 주셨다", "잘 돌리면 좋겠다"
+            ],
+            '11': [
+                "종이를 뒤집어서", "빛나고 싶니", "도움이 필요한 친구", "꽃향기를 맡습니다", "대피해야 합니다",
+                "하면 안 됩니다", "갈 수 없게 됩니다", "괜찮아 아저씨", "낮잠을 자는데", "세 개씩 묶었어요"
+            ],
+            '12': [
+                "가르마를 탔어요", "꼬불꼬불 말았어요", "머리카락을 땋았어요", "깜짝 놀라 외쳤어요", "깃털이 있잖아",
+                "예뻐지고 싶은 거예요", "심장이 쿵쾅쿵쾅", "온몸이 화끈화끈", "새하얘졌어요", "왜 입이 안 떨어지지"
+            ],
+            '13': [
+                "밤에도 불을 밝혀", "널리 알리고 보존하는 일", "문어의 빨판을", "본떠 만들었습니다", "잘 달라붙습니다",
+                "칫솔걸이", "떨어지게 됩니다", "숲속을 걷다 보면", "옷에 열매가 붙어", "도꼬마리 열매에는"
+            ],
+            '14': [
+                "아무리 찾아도 없어", "뚫어지게 쳐다봤어", "연필 깨끗이 깎아 오기", "잃어버리는 바람에", "엄마한테 혼날 텐데",
+                "세 번째니까", "철석같이 약속을", "큰 소리로 외쳤어", "가방을 열어젖혔어", "달콤하고 짭조름했다"
+            ],
+            '15': [
+                "덩달아 신나", "친구랑 싸웠어", "그네를 탔어", "재미가 없는 걸", "재채기했다",
+                "내가 뽑혔다는 걸", "사랑받을 수 있겠지", "맛이 없어서", "맛있게 드세요", "뭐라고 했어"
+            ],
+            '16': [
+                "달달 볶은 다음", "브로콜리 섞어주고", "새하얀 우유 넣고", "보글보글 끓여주면", "끝내주게 맛있는",
+                "항아리를 빼앗으려고", "팔지 않았단 말일세", "깨부숴야겠어", "고장난 시계 때문에", "기분이 좋지 않았어요"
+            ]
+        };
 
-            // 구구단 문제 생성 함수
-            function generateProblem() {
-                const num1 = Math.floor(Math.random() * 8) + 2; // 2단부터 9단까지
-                const num2 = Math.floor(Math.random() * 9) + 1; // 1부터 9까지
-                const problemText = `${num1} x ${num2}`;
-                const answer = num1 * num2;
+        let currentWordList = wordLists[levelSelect.value]; // 선택된 난이도의 단어 목록
 
-                const problemElement = document.createElement('div');
-                problemElement.classList.add('problem');
-                problemElement.textContent = problemText;
-                problemElement.dataset.answer = answer; // 정답을 data- 속성으로 저장
+        // --- 게임 로직 함수들 ---
 
-                // 문제의 시작 X 위치를 랜덤으로 설정 (게임 영역 내에서)
-                const gameAreaWidth = gameArea.offsetWidth;
-                // 문제 요소의 너비를 얻어와서 정확한 랜덤 위치 계산
-                // DOM에 추가되어야 너비를 알 수 있으므로, 임시로 추가 후 위치 설정
-                gameArea.appendChild(problemElement); 
-                const problemWidth = problemElement.offsetWidth;
-                
-                problemElement.style.left = `${Math.random() * (gameAreaWidth - problemWidth - 10)}px`; // 여백 고려
-                problemElement.style.top = '0px'; // 항상 상단에서 시작
+        // 게임 시작 함수
+        function startGame() {
+            if (gameRunning) return; // 이미 게임이 실행 중이면 중복 실행 방지
 
-                problems.push(problemElement);
-            }
+            gameRunning = true;
+            score = 0;
+            scoreDisplay.textContent = `점수: ${score}`;
+            wordsFallingArea.innerHTML = ''; // 기존 단어들 모두 제거
+            fallingWords = [];
+            wordInput.value = '';
+            wordInput.focus(); // 게임 시작 시 입력창에 포커스
+            gameStatusMessage.textContent = '게임 중!';
+            startButton.disabled = true; // 시작 버튼 비활성화
+            levelSelect.disabled = true; // 난이도 선택 비활성화
 
-            // 게임 루프 (문제 이동 및 충돌 감지)
-            function gameLoop() {
-                if (!gameRunning) return;
+            // 난이도에 따른 속도 및 생성 주기 설정 (추후 더 정교하게 조절 가능)
+            const level = parseInt(levelSelect.value);
+            wordFallSpeed = 0.8 + (level * 0.1); // 급수가 높을수록 빠르게
+            wordGenerationRate = Math.max(1000, 3000 - (level * 100)); // 급수가 높을수록 자주 생성 (최소 1초)
 
-                // 역순으로 순회하여 배열 요소 제거 시 인덱스 문제 방지
-                for (let i = problems.length - 1; i >= 0; i--) {
-                    const problem = problems[i];
-                    let currentTop = parseInt(problem.style.top);
-                    let newTop = currentTop + 2; // 픽셀 단위로 아래로 이동 (속도 조절 가능)
-                    problem.style.top = `${newTop}px`;
+            // 단어 생성 및 떨어뜨리기 시작
+            wordGenerationInterval = setInterval(createFallingWord, wordGenerationRate);
+            gameLoopId = requestAnimationFrame(updateGame); // 게임 루프 시작
+        }
 
-                    // 문제 요소가 게임 영역 하단에 도달했는지 확인
-                    if (newTop + problem.offsetHeight > gameArea.offsetHeight) {
-                        // 게임 영역 밖으로 나가면 생명 감소
-                        life--;
-                        lifeSpan.textContent = life;
-                        problem.remove(); // 화면에서 문제 제거
-                        problems.splice(i, 1); // 배열에서도 제거
+        // 새 단어 생성 함수
+        function createFallingWord() {
+            if (!gameRunning) return;
 
-                        if (life <= 0) {
-                            endGame();
-                            return; // 게임 종료 시 더 이상 루프를 진행하지 않음
-                        }
-                    }
-                }
-            }
+            const randomIndex = Math.floor(Math.random() * currentWordList.length);
+            const wordText = currentWordList[randomIndex];
 
-            // 정답 입력 처리
-            answerInput.addEventListener('keydown', (e) => {
-                if (!gameRunning) return;
-                if (e.key === 'Enter') {
-                    const userAnswer = parseInt(answerInput.value.trim());
-                    let found = false;
+            const wordDiv = document.createElement('div');
+            wordDiv.classList.add('falling-word');
+            wordDiv.textContent = wordText;
 
-                    // 역순으로 순회하여 배열 요소 제거 시 인덱스 문제 방지
-                    for (let i = problems.length - 1; i >= 0; i--) {
-                        const problem = problems[i];
-                        const correctAnswer = parseInt(problem.dataset.answer);
+            // 가로 위치 랜덤 설정 (단어 길이 고려)
+            const wordWidth = wordText.length * 20; // 대략적인 글자 너비 추정
+            const maxX = wordsFallingArea.offsetWidth - wordWidth - 20; // 패딩 고려
+            wordDiv.style.left = `${Math.max(0, Math.random() * maxX)}px`; // 0 이상으로 설정
 
-                        if (userAnswer === correctAnswer) {
-                            score++;
-                            scoreSpan.textContent = score;
-                            problem.remove(); // 정답 맞추면 화면에서 제거
-                            problems.splice(i, 1); // 배열에서도 제거
-                            found = true;
-                            break; // 하나만 맞추면 되므로 루프 종료
-                        }
-                    }
+            wordsFallingArea.appendChild(wordDiv);
 
-                    if (!found && !isNaN(userAnswer)) { // 정답을 못 찾았고, 유효한 숫자를 입력했으면 (오답 처리)
-                        // 오답 시 생명 감소 등의 페널티를 추가할 수 있습니다.
-                        // life--;
-                        // lifeSpan.textContent = life;
-                        // if (life <= 0) {
-                        //     endGame();
-                        // }
-                    }
-                    answerInput.value = ''; // 입력창 비우기
-                }
+            // 음성으로 단어 읽어주기 (한국어)
+            const utterance = new SpeechSynthesisUtterance(wordText);
+            utterance.lang = 'ko-KR';
+            synth.speak(utterance);
+
+            // 단어 객체 생성 및 배열에 추가
+            fallingWords.push({
+                element: wordDiv,
+                text: wordText,
+                top: 0, // 현재 top 위치 (CSS transform 기반)
+                speed: wordFallSpeed * (0.8 + Math.random() * 0.4) // 약간의 속도 랜덤성 부여
             });
+        }
 
-            // 게임 종료 함수
-            function endGame() {
-                gameRunning = false;
-                clearInterval(gameInterval);
-                clearInterval(problemGenerationInterval);
-                alert(`게임 종료! 최종 점수: ${score}`);
-                startButton.disabled = false; // 게임 시작 버튼 다시 활성화
+        // 게임 루프 업데이트 함수 (requestAnimationFrame 사용으로 부드러운 애니메이션)
+        function updateGame() {
+            if (!gameRunning) {
+                cancelAnimationFrame(gameLoopId);
+                return;
             }
 
-            startButton.addEventListener('click', startGame);
+            const floorY = wordsFallingArea.offsetHeight - 50; // 단어가 바닥에 닿았다고 판단할 위치
+
+            for (let i = fallingWords.length - 1; i >= 0; i--) {
+                const wordObj = fallingWords[i];
+                wordObj.top += wordObj.speed;
+                wordObj.element.style.transform = `translateY(${wordObj.top}px)`;
+
+                if (wordObj.top > floorY) {
+                    // 단어가 바닥에 닿았을 때
+                    wordObj.element.remove();
+                    fallingWords.splice(i, 1); // 배열에서 제거
+                    score = Math.max(0, score - 50); // 점수 감점 (0점 이하로 내려가지 않게)
+                    scoreDisplay.textContent = `점수: ${score}`;
+                    gameStatusMessage.textContent = `"${wordObj.text}"를 놓쳤습니다! (-50점)`;
+                    if (fallingWords.length === 0 && gameRunning) { // 모든 단어를 놓치고 게임이 진행 중이라면 게임 오버
+                        gameOver();
+                    }
+                }
+            }
+
+            gameLoopId = requestAnimationFrame(updateGame); // 다음 프레임 요청
+        }
+
+        // 입력창 이벤트 리스너
+        wordInput.addEventListener('keydown', (e) => {
+            if (!gameRunning) return;
+            if (e.key === 'Enter') {
+                const inputText = wordInput.value.trim();
+                wordInput.value = ''; // 입력창 비우기
+
+                let found = false;
+                for (let i = fallingWords.length - 1; i >= 0; i--) {
+                    const wordObj = fallingWords[i];
+                    if (wordObj.text === inputText) {
+                        // 정확히 일치하는 단어를 찾았을 때
+                        wordObj.element.classList.add('correct'); // 초록색으로 변경 애니메이션
+                        // 잠시 후 사라지도록 처리 (애니메이션 보여준 후)
+                        setTimeout(() => {
+                            wordObj.element.remove(); // 화면에서 제거
+                        }, 200); // 0.2초 후 제거
+
+                        fallingWords.splice(i, 1); // 배열에서 제거
+                        score += 100;
+                        scoreDisplay.textContent = `점수: ${score}`;
+                        gameStatusMessage.textContent = `정답! "${inputText}" (+100점)`;
+                        found = true;
+                        break; // 가장 최근에 떨어진 단어 중 일치하는 것 하나만 처리
+                    }
+                }
+
+                if (!found) {
+                    gameStatusMessage.textContent = `틀렸습니다! "${inputText}" (-20점)`;
+                    score = Math.max(0, score - 20); // 오타 시 감점
+                    scoreDisplay.textContent = `점수: ${score}`;
+                }
+
+                // 점수가 너무 낮아지면 게임 오버 (예시)
+                if (score <= -100 && gameRunning) { // 점수가 -100점 이하가 되면 게임 오버
+                    gameOver();
+                }
+            }
         });
-        /* JavaScript 끝 */
+
+        // 게임 오버 함수
+        function gameOver() {
+            gameRunning = false;
+            clearInterval(wordGenerationInterval);
+            cancelAnimationFrame(gameLoopId); // 애니메이션 루프 중단
+            gameStatusMessage.textContent = `게임 오버! 최종 점수: ${score}`;
+            startButton.textContent = '다시 시작';
+            startButton.disabled = false; // 시작 버튼 다시 활성화
+            levelSelect.disabled = false; // 난이도 선택 다시 활성화
+            wordInput.value = '';
+            wordInput.blur(); // 입력창 포커스 해제
+
+            // 모든 떨어지는 단어 제거
+            fallingWords.forEach(wordObj => wordObj.element.remove());
+            fallingWords = [];
+
+            // Web Speech API의 큐에 남아있는 음성 중지
+            if (synth.speaking) {
+                synth.cancel();
+            }
+        }
+
+        // 난이도 선택 변경 시 단어 목록 업데이트
+        levelSelect.addEventListener('change', () => {
+            if (!gameRunning) { // 게임 중이 아닐 때만 변경 가능
+                currentWordList = wordLists[levelSelect.value];
+                gameStatusMessage.textContent = `난이도 ${levelSelect.value}급 선택`;
+            }
+        });
+
+        // 시작 버튼 클릭 이벤트
+        startButton.addEventListener('click', startGame);
+
+        // 초기 설정
+        document.addEventListener('DOMContentLoaded', () => {
+            gameStatusMessage.textContent = `난이도를 선택하고 '게임 시작' 버튼을 누르세요.`;
+            levelSelect.value = '1'; // 기본 1급 선택
+            currentWordList = wordLists['1']; // 초기 단어 목록 설정
+
+            // 브라우저가 Web Speech API를 지원하는지 확인
+            if (!('speechSynthesis' in window)) {
+                gameStatusMessage.textContent = '죄송합니다. 이 브라우저는 음성 합성을 지원하지 않습니다.';
+                startButton.disabled = true;
+            }
+        });
+        /* script.js 내용 끝 */
     </script>
 </body>
 </html>
